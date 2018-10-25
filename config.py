@@ -12,6 +12,8 @@ class DevelopmentConfig(BaseConfig):
     SECRET_KEY = b'0qf\xcd^R\x05\xcem\x88d\x8c\x85~\x05\xe4\\1\xc4\x90\xb3z\xc4e'
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root@localhost:3306/pan'
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+    # 文件存储位置
+    UPLOAD_FILE_REPOSITORY = 'C:\\Users\\admin\\Desktop\\restful-pan\\Repository'
 
 
 class ProductionConfig(BaseConfig):

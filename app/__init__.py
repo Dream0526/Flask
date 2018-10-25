@@ -13,4 +13,7 @@ def create_app(config_name):
     app.config.from_object(Configs[config_name])
     db.init_app(app)
 
+    from app.api import api as api_blueprint
+    app.register_blueprint(api_blueprint)
+
     return app
