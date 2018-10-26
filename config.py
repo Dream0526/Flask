@@ -13,7 +13,7 @@ class DevelopmentConfig(BaseConfig):
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:crush@localhost:3306/pan'
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     # 文件存储位置
-    UPLOAD_FILE_REPOSITORY = 'C:\\Users\\ZouSK\\Desktop\\Flask\\Repository'
+    UPLOAD_FILE_REPOSITORY = '/home/zousk/桌面/Flask/Repository'
 
 
 class ProductionConfig(BaseConfig):

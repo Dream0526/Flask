@@ -28,14 +28,11 @@ class InstanceFile(db.Model):
         将用户上传的文件保存到指定目录
         """
         abs_path = os.path.join(current_app.config['UPLOAD_FILE_REPOSITORY'], file.filename)
-        file.save(abs_path)
         instance_file = cls(
             fid=shortuuid.uuid(),
             fmd5=md5_val,
             server_path=abs_path
         )
-        # db.session.add(instance_file)
-        # db.session.commit()
         return instance_file
 
     def object_to_json(self):
@@ -52,7 +49,7 @@ class InstanceFile(db.Model):
 class VirtualFile(db.Model):
 
     __tablename__ = 'virtual_file'
-    vid = db.Column(db.Integer, primary_key=True)
+    vid = db.Column(db.String(32), primary_key=True)
     # 和实体文件表中文件的关联
     instance_id = db.Column(db.String(32), db.ForeignKey('instance_file.fid'))
     # 该虚拟文件所属者的id
@@ -78,12 +75,12 @@ class VirtualFile(db.Model):
             instance_id=file_info.get('fid'),
             owner_id=owner_id,
             fmd5=file_info.get('fmd5'),
-            client_path='',
+            client_path='client_path',
             server_path=file_info.get('server_path'),
-            font_file_name='',
-            server_filename='',
-            file_zie='',
-            file_type='',
+            font_file_name='file_name',
+            server_filename='file_name',
+            file_size=1024,
+            file_type='png',
             upload_time=file_info.get('uplod_time')
         )
         return virtual

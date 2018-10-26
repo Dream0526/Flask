@@ -11,6 +11,11 @@ migrate = Migrate(app, db)
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
 
+@manager.shell
+def make_shell_context():
+
+    return dict(db=db, app=app, font_user=FontUser, ins=InstanceFile, vir=VirtualFile)
+
 
 if __name__ == '__main__':
     manager.run()
