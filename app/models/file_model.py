@@ -34,8 +34,8 @@ class InstanceFile(db.Model):
             fmd5=md5_val,
             server_path=abs_path
         )
-        db.session.add(instance_file)
-        db.session.commit()
+        # db.session.add(instance_file)
+        # db.session.commit()
         return instance_file
 
     def object_to_json(self):
@@ -73,4 +73,18 @@ class VirtualFile(db.Model):
     @classmethod
     def create_virtual_file(cls, file_info, owner_id):
 
-        pass
+        virtual = cls(
+            vid=shortuuid.uuid(),
+            instance_id=file_info.get('fid'),
+            owner_id=owner_id,
+            fmd5=file_info.get('fmd5'),
+            client_path='',
+            server_path=file_info.get('server_path'),
+            font_file_name='',
+            server_filename='',
+            file_zie='',
+            file_type='',
+            upload_time=file_info.get('uplod_time')
+        )
+        return virtual
+
