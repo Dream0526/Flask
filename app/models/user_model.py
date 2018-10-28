@@ -8,7 +8,7 @@ from app.helpers import generate_random_username as gru
 class FontUser(db.Model):
 
     __tablename__ = 'font_user'
-    uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email = db.Column(db.String(64), index=True, unique=True, nullable=False)
     username = db.Column(db.String(64), index=True, default=gru)
     _password = db.Column(db.String(256), nullable=False)

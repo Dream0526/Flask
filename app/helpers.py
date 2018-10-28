@@ -52,6 +52,7 @@ def get_file_info(file_path):
 
     pass
 
+
 if __name__ == '__main__':
     r = generate_random_username()
     print(r)

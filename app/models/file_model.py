@@ -53,7 +53,7 @@ class VirtualFile(db.Model):
     # 和实体文件表中文件的关联
     instance_id = db.Column(db.String(32), db.ForeignKey('instance_file.fid'))
     # 该虚拟文件所属者的id
-    owner_id = db.Column(db.Integer, db.ForeignKey('font_user.uid'))
+    owner_id = db.Column(db.Integer, db.ForeignKey('font_user.id'))
     fmd5 = db.Column(db.String(32), nullable=False)
     # 前端展示出来的文件路径，也是用户寻找到文件的唯一方式
     client_path = db.Column(db.Text, nullable=False)
@@ -67,9 +67,22 @@ class VirtualFile(db.Model):
     file_type = db.Column(db.String(16), default=u'未知文件类型')
     upload_time = db.Column(db.DateTime(), default=datetime.utcnow)
 
-    @classmethod
-    def create_virtual_file(cls, file_info, owner_id):
+    @staticmethod
+    def rename(origin_name, num):
+        name_list = origin_name.split('.')
+        new_name = '.'.join(name_list[:-1]) + '({}).'.format(num) + name_list[-1]
+        return new_name
 
+    @classmethod
+    def create_virtual_file(cls, file_info, owner_id, file):
+        """
+        file_size, file_type, client_path 均由前端提供
+        """
+        query_result = cls.query.filter(cls.owner_id==owner_id, cls.server_filename==file.filename)
+        if query_result:
+            font_file_name = cls.rename(file.filename, query_result.count())
+        else:
+            font_file_name = file.filename
         virtual = cls(
             vid=shortuuid.uuid(),
             instance_id=file_info.get('fid'),
@@ -77,11 +90,26 @@ class VirtualFile(db.Model):
             fmd5=file_info.get('fmd5'),
             client_path='client_path',
             server_path=file_info.get('server_path'),
-            font_file_name='file_name',
-            server_filename='file_name',
+            font_file_name=font_file_name,
+            server_filename=file.filename,
             file_size=1024,
             file_type='png',
             upload_time=file_info.get('uplod_time')
         )
         return virtual
 
+    def object_to_json(self):
+
+        return {
+            'vid': self.vid,
+            'instance_id': self.instance_id,
+            'owner_id': self.owner_id,
+            'fmd5': self.fmd5,
+            'client_path': self.client_path,
+            'server_path': self.server_path,
+            'font_file_name': self.font_file_name,
+            'server_file_name': self.server_filename,
+            'file_size': self.file_size,
+            'file_type': self.file_type,
+            'upload_time': self.upload_time
+        }
