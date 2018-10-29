@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from flask import request, jsonify
+from flask import request, jsonify, current_app
 from flask_jwt import jwt_required
 from app.helpers import calculate_md5_for_bigfile
 from app.models.file_model import InstanceFile, VirtualFile
@@ -24,9 +24,10 @@ def upload_file():
     db.session.add_all([instance, virtual])
     try:
         db.session.add_all([instance, virtual])
-        db.session.commit()
         get_file.save(file_info.get('server_path'))
+        db.session.commit()
         return jsonify(virtual.object_to_json())
     except Exception as e:
+        print(e)
         db.session.rollback()
         return jsonify({'status': 'fail', 'code': 2000})

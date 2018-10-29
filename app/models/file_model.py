@@ -13,6 +13,8 @@ class InstanceFile(db.Model):
     __tablename__ = 'instance_file'
     fid = db.Column(db.String(32), primary_key=True)
     fmd5 = db.Column(db.String(32), unique=True, nullable=False)
+    # 文件上传时候的路径
+    origin_path = db.Column(db.String(256), nullable=False)
     server_path = db.Column(db.String(256), nullable=False)
     upload_time = db.Column(db.DateTime(), default=datetime.utcnow)
 

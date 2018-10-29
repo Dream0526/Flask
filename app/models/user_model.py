@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
+from datetime import datetime
 from faker import Factory
 from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.helpers import generate_random_username as gru
+from app.helpers import fake_name
 
 
 class FontUser(db.Model):
@@ -10,8 +11,9 @@ class FontUser(db.Model):
     __tablename__ = 'font_user'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email = db.Column(db.String(64), index=True, unique=True, nullable=False)
-    username = db.Column(db.String(64), index=True, default=gru)
+    username = db.Column(db.String(64), index=True, default=fake_name)
     _password = db.Column(db.String(256), nullable=False)
+    join_time = db.Column(db.DateTime(), default=datetime.utcnow)
 
     @classmethod
     def create_fake_user(cls, num):

@@ -15,7 +15,8 @@ class DevelopmentConfig(BaseConfig):
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     # 文件存储位置
     # UPLOAD_FILE_REPOSITORY = '/home/zousk/桌面/Flask/Repository'
-    UPLOAD_FILE_REPOSITORY = 'C:\\Users\\admin\\Desktop\\Flask\\Repository'
+    # UPLOAD_FILE_REPOSITORY = 'C:\\Users\\admin\\Desktop\\Flask\\Repository'
+    UPLOAD_FILE_REPOSITORY = 'C:\\Users\\kkkkk\\Desktop\\Flask\\Repository'
     JWT_EXPIRATION_DELTA = timedelta(seconds=3000)
 
 

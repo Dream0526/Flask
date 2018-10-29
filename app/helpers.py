@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
-import os
 from hashlib import md5
-import string
-import random
+from faker import Factory
 
 
-def generate_random_username():
+def fake_name():
 
-    letter_range = string.ascii_letters + string.digits
-    result = [random.choice(letter_range) for _ in range(16)]
-    return ''.join(result)
+    f = Factory.create()
+    username = f.user_name()
+    return username
 
 
 # def calculate_md5_for_file(file):
