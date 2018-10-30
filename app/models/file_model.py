@@ -4,6 +4,7 @@ from datetime import datetime
 import shortuuid
 import os
 from app import db
+from app.models.user_model import FontUser
 
 
 class InstanceFile(db.Model):
@@ -39,13 +40,53 @@ class InstanceFile(db.Model):
 
     def object_to_json(self):
 
-        json_file =  {
+        json_file = {
             'fid': self.fid,
             'fmd5': self.fmd5,
             'server_path': self.server_path,
             'upload_time': self.upload_time
         }
         return json_file
+
+
+class FileFolderRelations(db.Model):
+    """
+    虚拟文件夹和虚拟文件之间的所属关系，
+    """
+    __tablename__ = 'file_folder_relations'
+    folder_id = db.Column(db.String(32), db.ForeignKey('virtual_folder.folder_id'), primary_key=True)
+    file_id = db.Column(db.String(32), db.ForeignKey('virtual_file.vid'), primary_key=True)
+    # 为方便查找，添加此项
+    client_path = db.Column(db.String(32), nullable=False)
+    # 此关系是否还存在
+    exist = db.Column(db.Boolean, default=False)
+    create_time = db.Column(db.DateTime(), default=datetime.utcnow)
+
+
+# class FoldersRelations(db.Model):
+#     """
+#     直接父文件夹和直接子文件夹之间的关系，一个父文件夹对应多个直接子文件夹，
+#     一个子文件夹对应一个夫文件夹
+#     """
+#     __tablename__ = 'folders_relations'
+#     direct_parent_folder_id = db.Column(db.String(32), db.ForeignKey('virtual_folder.folder_id'), primary_key=True)
+#     direct_child_folder_id = db.Column(db.String(32), db.ForeignKey('virtual_folder.folder_id'), primary_key=True)
+#     exist = db.Column(db.Boolean, default=False)
+#     create_time = db.Column(db.DateTime(), default=datetime.utcnow)
+
+
+class VirtualFolder(db.Model):
+
+    __tablename__ = 'folder'
+    folder_id = db.Column(db.String(32), primary_key=True)
+    path = db.Column(db.String(256), nullable=False)
+    # virtual_files = db.relationship('VirtualFile', foreign_keys=[FileFolderRelations.file_id], lazy='dynamic')
+    create_time = db.Column(db.DateTime(), default=datetime.utcnow)
+
+    @classmethod
+    def create(cls):
+
+        pass
 
 
 class VirtualFile(db.Model):
@@ -114,4 +155,50 @@ class VirtualFile(db.Model):
             'file_size': self.file_size,
             'file_type': self.file_type,
             'upload_time': self.upload_time
+        }
+
+
+class ShareModel(db.Model):
+
+    __tablename__ = 'shares'
+    share_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    file_id = db.Column(db.String(64), nullable=False)
+    # 分享者id
+    from_person_id = db.Column(db.String(64), nullable=False)
+    from_person_name = db.Column(db.String(64), nullable=False)
+    # 被分享者id
+    to_person_id = db.Column(db.String(64), nullable=False)
+    to_person_name = db.Column(db.String(64), nullable=False)
+    share_time = db.Column(db.DateTime(), default=datetime.utcnow)
+
+    @classmethod
+    def share_parse(cls, form_data, current_uid):
+        """
+        to_person_name: 被分享者name，可由前端提供，此处假设前端只提供to_person_id
+        current_uid: 分享者id
+        """
+        to_person_id = form_data.get('to_person_id')
+        from_person_id = current_uid.id
+        vid = form_data.get('vid')
+        to_person = FontUser.query.get_or_404(to_person_id)
+        from_person = FontUser.query.get(from_person_id)
+        share_obj = cls(
+            file_id=vid,
+            from_person_id=from_person_id,
+            from_person_name=from_person.username,
+            to_person_id=to_person_id,
+            to_person_name=to_person.username
+        )
+        db.session.add(share_obj)
+        db.session.commit()
+        return share_obj
+
+    def object_to_json(self):
+
+        return {
+            'share_id': self.share_id,
+            'file_id': self.file_id,
+            'from_person_name': self.from_person_name,
+            'to_person_name': self.to_person_name,
+            'share_time': self.share_time
         }

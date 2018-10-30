@@ -31,3 +31,14 @@ def upload_file():
         print(e)
         db.session.rollback()
         return jsonify({'status': 'fail', 'code': 2000})
+
+
+@api.route('/pre_upload/', methods=['POST'])
+def pre_upload():
+    """
+    文件上传前的操作，如创建文件夹等
+    前端提供文件路径
+    path: /A/C/file.txt
+    """
+    pass
+

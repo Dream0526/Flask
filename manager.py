@@ -3,8 +3,7 @@ from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
 from app import create_app, db
 from app.models.user_model import FontUser
-from app.models.file_model import InstanceFile, VirtualFile
-from app.models.share_model import ShareModel
+from app.models.file_model import InstanceFile, VirtualFile, ShareModel
 
 
 app = create_app('default')
