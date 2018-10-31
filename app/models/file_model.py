@@ -51,36 +51,41 @@ class InstanceFile(db.Model):
 
 class FileFolderRelations(db.Model):
     """
-    虚拟文件夹和虚拟文件之间的所属关系，
+    虚拟文件夹和虚拟文件之间的所属关系,用于get到一个文件夹下的所有后代文件
     """
     __tablename__ = 'file_folder_relations'
     folder_id = db.Column(db.String(32), db.ForeignKey('virtual_folder.folder_id'), primary_key=True)
     file_id = db.Column(db.String(32), db.ForeignKey('virtual_file.vid'), primary_key=True)
     # 为方便查找，添加此项
-    client_path = db.Column(db.String(32), nullable=False)
+    # client_path = db.Column(db.String(32), nullable=False)
     # 此关系是否还存在
     exist = db.Column(db.Boolean, default=False)
     create_time = db.Column(db.DateTime(), default=datetime.utcnow)
 
 
-# class FoldersRelations(db.Model):
-#     """
-#     直接父文件夹和直接子文件夹之间的关系，一个父文件夹对应多个直接子文件夹，
-#     一个子文件夹对应一个夫文件夹
-#     """
-#     __tablename__ = 'folders_relations'
-#     direct_parent_folder_id = db.Column(db.String(32), db.ForeignKey('virtual_folder.folder_id'), primary_key=True)
-#     direct_child_folder_id = db.Column(db.String(32), db.ForeignKey('virtual_folder.folder_id'), primary_key=True)
-#     exist = db.Column(db.Boolean, default=False)
-#     create_time = db.Column(db.DateTime(), default=datetime.utcnow)
+class FoldersRelations(db.Model):
+
+    __tablename__ = 'folders_relations'
+    # 父文件夹，每个文件夹只能有一个父文件夹
+    parent_folder_id = db.Column(db.String(32), db.ForeignKey('folder.folder_id'), primary_key=True)
+    # 子文件夹，一个文件夹有0-n个子文件夹
+    child_folder_id = db.Column(db.String(32), db.ForeignKey('folder.folder_id'), primary_key=True)
+    # 存在标识符，删除时置为False
+    exist = db.Column(db.Boolean, default=True)
+    create_time = db.Column(db.DateTime(), default=datetime.utcnow)
 
 
 class VirtualFolder(db.Model):
 
     __tablename__ = 'folder'
     folder_id = db.Column(db.String(32), primary_key=True)
-    path = db.Column(db.String(256), nullable=False)
-    # virtual_files = db.relationship('VirtualFile', foreign_keys=[FileFolderRelations.file_id], lazy='dynamic')
+    folder_name = db.Column(db.String(32), nullable=False)
+    # 该文件夹中的所有子文件
+    child_files = db.relationship('VirtualFile', backref='parent_folder')
+    #  该文件夹中的所有子文件夹
+    child_folders = db.relationship('FoldersRelations', foreign_keys=[FoldersRelations.parent_folder_id])
+    # 该文件夹的父文件夹
+    parent_folder = db.relationship('FoldersRelations', foreign_keys=[FoldersRelations.child_folder_id])
     create_time = db.Column(db.DateTime(), default=datetime.utcnow)
 
     @classmethod
@@ -95,15 +100,17 @@ class VirtualFile(db.Model):
     vid = db.Column(db.String(32), primary_key=True)
     # 和实体文件表中文件的关联
     instance_id = db.Column(db.String(32), db.ForeignKey('instance_file.fid'))
+    # 该文件的父文件夹id
+    parent_folder_id = db.Column(db.String(32), db.ForeignKey('VirtualFolder.folder_id'))
     # 该虚拟文件所属者的id
     owner_id = db.Column(db.Integer, db.ForeignKey('font_user.id'))
     fmd5 = db.Column(db.String(32), nullable=False)
-    # 前端展示出来的文件路径，也是用户寻找到文件的唯一方式
-    client_path = db.Column(db.Text, nullable=False)
+    # 前端展示出来的文件路径
+    font_path = db.Column(db.Text, nullable=False)
+    # 前端文件名
+    font_file_name = db.Column(db.String(256), nullable=False)
     # 在服务器上保存的后的文件路径
     server_path = db.Column(db.String(256), nullable=False)
-    # 前端展示出的文件名
-    font_file_name = db.Column(db.String(256), nullable=False)
     # 在服务器上保存后的文件名
     server_filename = db.Column(db.String(256), nullable=False)
     file_size = db.Column(db.Integer, nullable=False)
