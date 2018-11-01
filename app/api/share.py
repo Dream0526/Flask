@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from flask import request, jsonify, abort
 from flask_jwt import current_identity, jwt_required
-from app.models.share_model import ShareModel
+from app.models.file_model import ShareModel
 from . import api
 
 

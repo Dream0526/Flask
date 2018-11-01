@@ -14,8 +14,9 @@ class InstanceFile(db.Model):
     __tablename__ = 'instance_file'
     fid = db.Column(db.String(32), primary_key=True)
     fmd5 = db.Column(db.String(32), unique=True, nullable=False)
-    # 文件上传时候的路径
+    # 上传文件时的相对路径
     origin_path = db.Column(db.String(256), nullable=False)
+    # 服务器存储是的路径
     server_path = db.Column(db.String(256), nullable=False)
     upload_time = db.Column(db.DateTime(), default=datetime.utcnow)
 
@@ -34,6 +35,7 @@ class InstanceFile(db.Model):
         instance_file = cls(
             fid=shortuuid.uuid(),
             fmd5=md5_val,
+            origin_path='',
             server_path=abs_path
         )
         return instance_file
@@ -43,6 +45,7 @@ class InstanceFile(db.Model):
         json_file = {
             'fid': self.fid,
             'fmd5': self.fmd5,
+            'origin_path': self.origin_path,
             'server_path': self.server_path,
             'upload_time': self.upload_time
         }
@@ -56,8 +59,6 @@ class FileFolderRelations(db.Model):
     __tablename__ = 'file_folder_relations'
     folder_id = db.Column(db.String(32), db.ForeignKey('virtual_folder.folder_id'), primary_key=True)
     file_id = db.Column(db.String(32), db.ForeignKey('virtual_file.vid'), primary_key=True)
-    # 为方便查找，添加此项
-    # client_path = db.Column(db.String(32), nullable=False)
     # 此关系是否还存在
     exist = db.Column(db.Boolean, default=False)
     create_time = db.Column(db.DateTime(), default=datetime.utcnow)
@@ -67,9 +68,9 @@ class FoldersRelations(db.Model):
 
     __tablename__ = 'folders_relations'
     # 父文件夹，每个文件夹只能有一个父文件夹
-    parent_folder_id = db.Column(db.String(32), db.ForeignKey('folder.folder_id'), primary_key=True)
+    parent_folder_id = db.Column(db.String(32), db.ForeignKey('virtual_folder.folder_id'), primary_key=True)
     # 子文件夹，一个文件夹有0-n个子文件夹
-    child_folder_id = db.Column(db.String(32), db.ForeignKey('folder.folder_id'), primary_key=True)
+    child_folder_id = db.Column(db.String(32), db.ForeignKey('virtual_folder.folder_id'), primary_key=True)
     # 存在标识符，删除时置为False
     exist = db.Column(db.Boolean, default=True)
     create_time = db.Column(db.DateTime(), default=datetime.utcnow)
@@ -77,11 +78,13 @@ class FoldersRelations(db.Model):
 
 class VirtualFolder(db.Model):
 
-    __tablename__ = 'folder'
+    __tablename__ = 'virtual_folder'
     folder_id = db.Column(db.String(32), primary_key=True)
     folder_name = db.Column(db.String(32), nullable=False)
     # 该文件夹中的所有子文件
     child_files = db.relationship('VirtualFile', backref='parent_folder')
+    # 该文件夹下的所有后代文件，下载文件夹时，通过指定文件夹可以下载该文件夹下的所有文件
+    descendant_files = db.relationship('FileFolderRelations', foreign_keys=[FileFolderRelations.folder_id])
     #  该文件夹中的所有子文件夹
     child_folders = db.relationship('FoldersRelations', foreign_keys=[FoldersRelations.parent_folder_id])
     # 该文件夹的父文件夹
@@ -101,7 +104,7 @@ class VirtualFile(db.Model):
     # 和实体文件表中文件的关联
     instance_id = db.Column(db.String(32), db.ForeignKey('instance_file.fid'))
     # 该文件的父文件夹id
-    parent_folder_id = db.Column(db.String(32), db.ForeignKey('VirtualFolder.folder_id'))
+    parent_folder_id = db.Column(db.String(32), db.ForeignKey('virtual_folder.folder_id'))
     # 该虚拟文件所属者的id
     owner_id = db.Column(db.Integer, db.ForeignKey('font_user.id'))
     fmd5 = db.Column(db.String(32), nullable=False)
@@ -128,7 +131,7 @@ class VirtualFile(db.Model):
         """
         file_size, file_type, client_path 均由前端提供
         """
-        query_result = cls.query.filter(cls.owner_id==owner_id, cls.server_filename==file.filename)
+        query_result = cls.query.filter(cls.owner_id == owner_id, cls.server_filename == file.filename)
         if query_result:
             font_file_name = cls.rename(file.filename, query_result.count())
         else:
@@ -138,7 +141,8 @@ class VirtualFile(db.Model):
             instance_id=file_info.get('fid'),
             owner_id=owner_id,
             fmd5=file_info.get('fmd5'),
-            client_path='client_path',
+            parent_folder='',
+            font_path='client_path',
             server_path=file_info.get('server_path'),
             font_file_name=font_file_name,
             server_filename=file.filename,
@@ -155,7 +159,7 @@ class VirtualFile(db.Model):
             'instance_id': self.instance_id,
             'owner_id': self.owner_id,
             'fmd5': self.fmd5,
-            'client_path': self.client_path,
+            'font_path': self.font_path,
             'server_path': self.server_path,
             'font_file_name': self.font_file_name,
             'server_file_name': self.server_filename,
