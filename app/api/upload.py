@@ -21,14 +21,13 @@ def upload_file():
         instance = InstanceFile.query.filter_by(fmd5=file_md5).first()
     file_info = instance.object_to_json()
     virtual = VirtualFile.create_virtual_file(file_info, from_data, get_file)
-    db.session.add_all([instance, virtual])
     try:
         db.session.add_all([instance, virtual])
         db.session.commit()
-        get_file.save(file_info.get('server_path'))
+        # get_file.save(file_info.get('server_path'))
         return jsonify(virtual.object_to_json())
     except Exception as e:
-        print(e)
+        print('Exception: {}'.format(e))
         db.session.rollback()
         return jsonify({'status': 'fail', 'code': 2000})
 

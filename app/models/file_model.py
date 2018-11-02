@@ -81,8 +81,10 @@ class VirtualFolder(db.Model):
     __tablename__ = 'virtual_folder'
     folder_id = db.Column(db.String(32), primary_key=True)
     folder_name = db.Column(db.String(32), nullable=False)
+    # 是否是根文件(夹)
+    root_note = db.Column(db.Boolean, nullable=False, default=False)
     # 该文件夹中的所有子文件
-    child_files = db.relationship('VirtualFile', backref='parent_folder')
+    # child_files = db.relationship('VirtualFile', backref='parent_folder')
     # 该文件夹下的所有后代文件，下载文件夹时，通过指定文件夹可以下载该文件夹下的所有文件
     descendant_files = db.relationship('FileFolderRelations', foreign_keys=[FileFolderRelations.folder_id])
     #  该文件夹中的所有子文件夹
@@ -90,6 +92,11 @@ class VirtualFolder(db.Model):
     # 该文件夹的父文件夹
     parent_folder = db.relationship('FoldersRelations', foreign_keys=[FoldersRelations.child_folder_id])
     create_time = db.Column(db.DateTime(), default=datetime.utcnow)
+
+    @classmethod
+    def init_folder(cls):
+
+        pass
 
     @classmethod
     def create(cls):
@@ -103,11 +110,13 @@ class VirtualFile(db.Model):
     vid = db.Column(db.String(32), primary_key=True)
     # 和实体文件表中文件的关联
     instance_id = db.Column(db.String(32), db.ForeignKey('instance_file.fid'))
-    # 该文件的父文件夹id
-    parent_folder_id = db.Column(db.String(32), db.ForeignKey('virtual_folder.folder_id'))
+    # 该文件父文件夹id
+    # parent_folder_id = db.Column(db.String(32), db.ForeignKey('virtual_folder.id'))
     # 该虚拟文件所属者的id
     owner_id = db.Column(db.Integer, db.ForeignKey('font_user.id'))
     fmd5 = db.Column(db.String(32), nullable=False)
+    # 是否是根文件(夹)
+    root_node = db.Column(db.Boolean, nullable=False, default=False)
     # 前端展示出来的文件路径
     font_path = db.Column(db.Text, nullable=False)
     # 前端文件名
@@ -127,12 +136,13 @@ class VirtualFile(db.Model):
         return new_name
 
     @classmethod
-    def create_virtual_file(cls, file_info, owner_id, file):
+    def create_virtual_file(cls, file_info, form_data, file):
         """
         file_size, file_type, client_path 均由前端提供
         """
+        owner_id = form_data['uploader']
         query_result = cls.query.filter(cls.owner_id == owner_id, cls.server_filename == file.filename)
-        if query_result:
+        if query_result.first():
             font_file_name = cls.rename(file.filename, query_result.count())
         else:
             font_file_name = file.filename
@@ -141,7 +151,6 @@ class VirtualFile(db.Model):
             instance_id=file_info.get('fid'),
             owner_id=owner_id,
             fmd5=file_info.get('fmd5'),
-            parent_folder='',
             font_path='client_path',
             server_path=file_info.get('server_path'),
             font_file_name=font_file_name,
